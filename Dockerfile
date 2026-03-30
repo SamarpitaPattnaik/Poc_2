@@ -1,7 +1,7 @@
 FROM python:3.11-slim
-# Set working directory
 WORKDIR /app
-# Copy python file
 COPY app.py .
-# Run the script
+# Install Flask
+RUN pip install flask
+EXPOSE 5000
 CMD ["python", "app.py"]
