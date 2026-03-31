@@ -1,10 +1,18 @@
 pipeline {
    agent any
+   environment {
+       REPO_URL = 'https://github.com/SamarpitaPattnaik/Poc_2.git'
+       BRANCH = 'main'
+       IMAGE_NAME = 'hello-python'
+       CONTAINER_NAME = 'hello-container'
+       APP_PORT = '5000'
+   }
    stages {
        stage('1. Clone Repository') {
            steps {
                echo 'Cloning the repository...'
-               git branch: 'main'
+               git branch: "${BRANCH}",
+                   url: "${REPO_URL}"
            }
        }
        stage('2. Verify Files') {
@@ -16,26 +24,29 @@ pipeline {
        stage('3. Build Docker Image') {
            steps {
                echo 'Building Docker image...'
-               sh 'docker build -t hello-python .'
+               sh "docker build -t ${IMAGE_NAME} ."
            }
        }
        stage('4. Stop Old Container') {
            steps {
                echo 'Stopping old container if running...'
-               sh 'docker stop hello-container || true'
-               sh 'docker rm hello-container || true'
+               sh "docker stop ${CONTAINER_NAME} || true"
+               sh "docker rm ${CONTAINER_NAME} || true"
            }
        }
        stage('5. Run Container') {
            steps {
-               echo 'Running container on port 5000...'
-               sh 'docker run -d --name hello-container -p 5000:5000 hello-python'
+               echo 'Running container...'
+               sh "docker run -d --name ${CONTAINER_NAME} -p ${APP_PORT}:${APP_PORT} ${IMAGE_NAME}"
            }
        }
    }
    post {
        success {
-           echo '✅ App is live at http://<ec2-public-ip>:5000'
+           script {
+               def publicIp = sh(script: "curl -s http://169.254.169.254/latest/meta-data/public-ipv4", returnStdout: true).trim()
+               echo "✅ App is live at http://${publicIp}:${APP_PORT}"
+           }
        }
        failure {
            echo '❌ Pipeline failed! Check logs.'
