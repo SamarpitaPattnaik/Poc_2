@@ -4,8 +4,7 @@ pipeline {
        stage('1. Clone Repository') {
            steps {
                echo 'Cloning the repository...'
-               git branch: 'main',
-                   url: 'https://github.com/username/repository-name.git'
+               git branch: 'main'
            }
        }
        stage('2. Verify Files') {
