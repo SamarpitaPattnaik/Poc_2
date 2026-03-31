@@ -11,8 +11,11 @@ pipeline {
        stage('1. Clone Repository') {
            steps {
                echo 'Cloning the repository...'
-               git branch: "${BRANCH}",
-                   url: "${REPO_URL}"
+               checkout([
+                   $class: 'GitSCM',
+                   branches: [[name: "*/${BRANCH}"]],
+                   userRemoteConfigs: [[url: "${REPO_URL}"]]
+               ])
            }
        }
        stage('2. Verify Files') {
