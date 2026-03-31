@@ -6,6 +6,7 @@ pipeline {
        IMAGE_NAME = 'hello-python'
        CONTAINER_NAME = 'hello-container'
        APP_PORT = '5000'
+       CREDS_ID = 'github-creds'
    }
    stages {
        stage('1. Clone Repository') {
@@ -14,7 +15,10 @@ pipeline {
                checkout([
                    $class: 'GitSCM',
                    branches: [[name: "*/${BRANCH}"]],
-                   userRemoteConfigs: [[url: "${REPO_URL}"]]
+                   userRemoteConfigs: [[
+                       url: "${REPO_URL}",
+                       credentialsId: "${CREDS_ID}"
+                   ]]
                ])
            }
        }
