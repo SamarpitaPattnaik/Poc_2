@@ -51,7 +51,7 @@ pipeline {
    post {
        success {
            script {
-               echo "✅ App is live at http://${publicIp}:${APP_PORT}"
+               echo "✅ App is live "
            }
        }
        failure {
