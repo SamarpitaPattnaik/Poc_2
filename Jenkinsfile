@@ -3,7 +3,7 @@ pipeline {
    environment {
        REPO_URL = 'https://github.com/SamarpitaPattnaik/Poc_2.git'
        BRANCH = 'main'
-       IMAGE_NAME = 'hello-python'
+       IMAGE_NAME = 'hello-mypoc'
        CONTAINER_NAME = 'hello-container'
        APP_PORT = '5000'
        CREDS_ID = 'github-creds'
