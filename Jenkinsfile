@@ -51,7 +51,6 @@ pipeline {
    post {
        success {
            script {
-               def publicIp = sh(script: "curl -s http://169.254.169.254/latest/meta-data/public-ipv4", returnStdout: true).trim()
                echo "✅ App is live at http://${publicIp}:${APP_PORT}"
            }
        }
