@@ -1,61 +1,103 @@
 pipeline {
-   agent any
-   environment {
-       REPO_URL = 'https://github.com/SamarpitaPattnaik/Poc_2.git'
-       BRANCH = 'main'
-       IMAGE_NAME = 'hello-mypoc'
-       CONTAINER_NAME = 'hello-container'
-       APP_PORT = '5000'
-       CREDS_ID = 'github-creds'
-   }
-   stages {
-       stage('1. Clone Repository') {
-           steps {
-               echo 'Cloning the repository...'
-               checkout([
-                   $class: 'GitSCM',
-                   branches: [[name: "*/${BRANCH}"]],
-                   userRemoteConfigs: [[
-                       url: "${REPO_URL}",
-                       credentialsId: "${CREDS_ID}"
-                   ]]
-               ])
-           }
-       }
-       stage('2. Verify Files') {
-           steps {
-               sh 'ls -la'
-               sh 'cat app.py'
-           }
-       }
-       stage('3. Build Docker Image') {
-           steps {
-               echo 'Building Docker image...'
-               sh "docker build -t ${IMAGE_NAME} ."
-           }
-       }
-       stage('4. Stop Old Container') {
-           steps {
-               echo 'Stopping old container if running...'
-               sh "docker stop ${CONTAINER_NAME} || true"
-               sh "docker rm ${CONTAINER_NAME} || true"
-           }
-       }
-       stage('5. Run Container') {
-           steps {
-               echo 'Running container...'
-               sh "docker run -d --name ${CONTAINER_NAME} -p ${APP_PORT}:${APP_PORT} ${IMAGE_NAME}"
-           }
-       }
-   }
-   post {
-       success {
-           script {
-               echo "✅ App is live "
-           }
-       }
-       failure {
-           echo '❌ Pipeline failed! Check logs.'
-       }
-   }
+    agent any
+    
+    tools {
+        maven 'Maven3'
+        jdk 'JDK21'
+    }
+    
+    environment {
+        SONAR_TOKEN = credentials('sonar-token')
+        IMAGE_NAME = "myapp"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
+    stages {
+
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/SamarpitaPattnaik/Boardgame.git'
+            }
+        }
+
+        stage('Maven Compile') {
+            steps {
+                sh 'mvn compile'
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('SonarQube - Code Quality') {
+            steps {
+                withSonarQubeEnv('SonarQube-Server') {
+                    sh '''mvn sonar:sonar \
+                        -Dsonar.projectKey=myapp \
+                        -Dsonar.token=${SONAR_TOKEN}'''
+                }
+            }
+        }
+
+        stage('OWASP Dependency Check') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --format HTML', 
+                                odcInstallation: 'OWASP-DC'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.html'
+            }
+        }
+
+        stage('Maven Package') {
+            steps {
+                sh 'mvn package -DskipTests'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh '''
+                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                '''
+            }
+        }
+
+        stage('Trivy - Image Scan') {
+            steps {
+                sh '''
+                    trivy image \
+                      --exit-code 0 \
+                      --severity HIGH,CRITICAL \
+                      --format table \
+                      ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+            }
+        }
+
+        stage('Deploy to Docker Container') {
+            steps {
+                sh '''
+                    docker stop myapp || true
+                    docker rm myapp || true
+                    docker run -d \
+                      --name myapp \
+                      -p 8081:8080 \
+                      ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs.'
+        }
+    }
 }
