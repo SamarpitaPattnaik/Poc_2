@@ -16,7 +16,7 @@ pipeline {
 
         stage('Git Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/SamarpitaPattnaik/Boardgame.git'
+                git branch: 'main', url: 'https://github.com/SamarpitaPattnaik/Poc_2.git'
             }
         }
 
