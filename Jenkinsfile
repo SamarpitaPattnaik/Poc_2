@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        sonarScanner 'sonar-scanner'
-    }
-
     environment {
         SONAR_TOKEN = credentials('sonar-token')
         IMAGE_NAME = "myapp"
