@@ -14,7 +14,7 @@ pipeline {
             steps {
                 echo 'Cloning the repository...'
                 git branch: 'main',
-                url: 'https://github.com/SamarpitaPattnaik/Poc_2.git'
+                url: 'https://github.com/SamarpitaPattnaik/Poc_8.git'
             }
         }
 
