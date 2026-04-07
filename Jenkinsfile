@@ -1,9 +1,9 @@
 pipeline {
     agent any
-    
+
     tools {
-    sonarScanner 'sonar-scanner'
-}
+        sonarScanner 'sonar-scanner'
+    }
 
     environment {
         SONAR_TOKEN = credentials('sonar-token')
@@ -38,14 +38,14 @@ pipeline {
                 sh '''
                 python3 --version
 
-                # Create virtual environment (FIXED)
+                # Create virtual environment
                 python3 -m venv venv
                 . venv/bin/activate
 
                 # Upgrade pip
                 pip install --upgrade pip
 
-                # Install dependencies safely
+                # Install dependencies if file exists
                 if [ -f requirements.txt ]; then
                     pip install -r requirements.txt
                 else
@@ -59,12 +59,12 @@ pipeline {
             steps {
                 echo 'Running SonarQube analysis...'
                 withSonarQubeEnv('SonarQube') {
-                    sh '''
-                    sonar-scanner \
+                    sh """
+                    ${tool 'sonar-scanner'}/bin/sonar-scanner \
                     -Dsonar.projectKey=myapp \
                     -Dsonar.sources=. \
                     -Dsonar.token=${SONAR_TOKEN}
-                    '''
+                    """
                 }
             }
         }
@@ -79,7 +79,7 @@ pipeline {
             }
         }
 
-        stage('7. Stop Old Container') {
+        stage('6. Stop Old Container') {
             steps {
                 echo 'Stopping old container...'
                 sh '''
@@ -89,7 +89,7 @@ pipeline {
             }
         }
 
-        stage('8. Run Container') {
+        stage('7. Run Container') {
             steps {
                 echo 'Running new container...'
                 sh '''
