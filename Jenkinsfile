@@ -21,7 +21,10 @@ pipeline {
         stage('2. Verify Files') {
             steps {
                 echo 'Checking project files...'
-                sh 'ls -la'
+                sh '''
+                pwd
+                ls -la
+                '''
             }
         }
 
@@ -30,7 +33,20 @@ pipeline {
                 echo 'Installing Python dependencies...'
                 sh '''
                 python3 --version
-                pip3 install -r requirements.txt || true
+
+                # Create virtual environment (FIXED)
+                python3 -m venv venv
+                . venv/bin/activate
+
+                # Upgrade pip
+                pip install --upgrade pip
+
+                # Install dependencies safely
+                if [ -f requirements.txt ]; then
+                    pip install -r requirements.txt
+                else
+                    echo "requirements.txt not found, skipping..."
+                fi
                 '''
             }
         }
@@ -63,7 +79,7 @@ pipeline {
             steps {
                 echo 'Scanning Docker image with Trivy...'
                 sh '''
-                trivy image ${IMAGE_NAME}:${IMAGE_TAG}
+                trivy image --exit-code 0 ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
         }
@@ -71,8 +87,10 @@ pipeline {
         stage('7. Stop Old Container') {
             steps {
                 echo 'Stopping old container...'
-                sh 'docker stop ${CONTAINER_NAME} || true'
-                sh 'docker rm ${CONTAINER_NAME} || true'
+                sh '''
+                docker stop ${CONTAINER_NAME} || true
+                docker rm ${CONTAINER_NAME} || true
+                '''
             }
         }
 
