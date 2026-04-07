@@ -75,15 +75,6 @@ pipeline {
             }
         }
 
-        stage('6. Trivy Scan') {
-            steps {
-                echo 'Scanning Docker image with Trivy...'
-                sh '''
-                trivy image --exit-code 0 ${IMAGE_NAME}:${IMAGE_TAG}
-                '''
-            }
-        }
-
         stage('7. Stop Old Container') {
             steps {
                 echo 'Stopping old container...'
